@@ -1,9 +1,6 @@
-import { useDispatch } from "react-redux";
-import { pressKey } from "../store/slices/letters/keyboardSlice";
 import { ReactComponent as BackSpaceSvg } from "./../assets/Logo.svg";
 
 export const Keyboard = ({onKeyPress}) => {
-  const dispatch = useDispatch();
 
   const keyboardLineKeys = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],

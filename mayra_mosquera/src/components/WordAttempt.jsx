@@ -1,11 +1,12 @@
 import { Slot } from "./Slot";
 
-export const WordAttempt = ({onSelectSlot}) => {
+export const WordAttempt = ({data}) => {
+
   return (
     <>
       <div className="word">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Slot key={i} onSelect={onSelectSlot} slotId={Math.random()}/>
+        {data.slots.map((slotData, i) => (
+          <Slot key={i} data={slotData} />
         ))}
       </div>
     </>

@@ -6,8 +6,7 @@ export const SlotSelectedSlice = createSlice({
     slotSelected: null,
   },
   reducers: {
-    setSlotSelected(state, action) {
-      console.log(state, action)
+    setSlotSelected(state, action) {     
       state.slotSelected = action.payload;
     },
   },

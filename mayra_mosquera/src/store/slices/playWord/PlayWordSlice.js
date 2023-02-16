@@ -7,18 +7,18 @@ export const PlayWordSlice = createSlice({
    initialState : {
       playWord : null,
       isLoading:false,
-      isRejected:false,
+      error:null,
    },
    reducers:{
-      startLoadingPlayWord:(state) => {
-         state.isLoading = true;
-      },
+   //    startLoadingPlayWord:(state) => {
+   //       state.isLoading = true;
+   //    },
      
-      setPlayWord:(state, action) =>{
-         state.isLoading = false;
-         state.playWord = action.payload;
-      }
-   },
+   //    setPlayWord:(state, action) =>{
+   //       state.isLoading = false;
+   //       state.playWord = action.payload;
+   //    }
+},
    extraReducers: (builder) => {
       builder.addCase(getWordPlayThunk.pending, (state, action) => {
          state.isLoading = true;
@@ -27,11 +27,13 @@ export const PlayWordSlice = createSlice({
       builder.addCase(getWordPlayThunk.fulfilled, (state, action) => {
          state.isLoading = false;
         state.playWord = action.payload;
+        state.error = null;
       })
       builder.addCase(getWordPlayThunk.rejected, (state, action) => {
          state.isLoading = false;
          state.isRejected= true;
         state.playWord = null;
+        state.error = action.error.message;
       })
     },
 });
