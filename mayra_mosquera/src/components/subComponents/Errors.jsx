@@ -1,9 +1,9 @@
-export const Errors = ({ error }) => {
+export const Errors = ({ message }) => {
   return (
     <>
       <div className="error">
         <div className="overlay"></div>
-        <div>{error} </div>
+        <div>{message} </div>
       </div>
     </>
   );

@@ -13,9 +13,9 @@ import "./css/words.css";
 function App() {
   return (
     <>
-      <div id="root">
+     
         <WordGame />
-      </div>
+      
     </>
   );
 }

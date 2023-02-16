@@ -1,39 +1,41 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { getWordCheckThunk } from "./checkWordThunks";
 
+export const CheckWordSlice = createSlice({
+  name: "checkWord",
+  initialState: {
+    checkWord: null,
+    iSLoading: false,
+    isValid: false,
+    error: null,
+  },
+  reducers: {},
 
-export const CheckWordSlice = createSlice({     
-   name:'checkWord',       
-   initialState : {  
-      checkWord : null,
-      checkWordIsLoading:false,
-      checkWordIsRejected:false,
-   },
-   reducers:{  
-      startLoadingCheckWord:(state) => {
-         state.checkWordIsLoading = true;
-      },
-      getCheckword:(state, action) =>{
-        state.checkWord = action.payload.letter.map((slot) => slot.letter).join("");
-      }
-   },          
-
-   // extraReducers: (builder) => {    
-
-   //    builder.addCase(getWordCheckThunk.pending, (state, action) => {
-   //       state.checkWordIsLoading = true;
-   //    })
-   //    builder.addCase(getWordCheckThunk.fulfilled, (state, action) => {
-   //       state.checkWordIsLoading = false;
-   //       state.checkWord = action.payload;
-   //    })
-   //    builder.addCase(getWordCheckThunk.rejected, (state, action) => {
-   //       state.checkWordIsLoading = false;
-   //       state.checkWordIsRejected= true;
-   //       state.checkWord = null;
-   //    })
-   //  },
-
+  extraReducers: (builder) => {
+    builder.addCase(getWordCheckThunk.pending, (state, action) => {
+      state.checkWordIsLoading = true;
+    });
+    builder.addCase(getWordCheckThunk.fulfilled, (state, action) => {
+      state.checkWordIsLoading = false;
+      
+    });
+    builder.addCase(getWordCheckThunk.rejected, (state, action) => {
+      state.checkWordIsLoading = false;
+      state.checkWordIsvalid = true;
+      state.checkWordError = action.error.message;
+    });
+  },
 });
 
+export const getWordFromAttempt = (attempt) => {
+  return attempt.slots.map((slot) => slot.letter || " ").join("");
+};
 
-export const { checkWord, startLoadingCheckWord, getCheckword, checkWordIsLoading, checkWordIsRejected} = CheckWordSlice.actions
+export const getCurrentAttempt = (state) => {
+  console.log("getCurrentAttempt", state);
+  return state.attempts[state.attempts.length - 1] || null;
+};
+
+export const {
+  checkWord, 
+} = CheckWordSlice.actions;

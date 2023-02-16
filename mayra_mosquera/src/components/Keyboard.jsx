@@ -1,6 +1,6 @@
 import { ReactComponent as BackSpaceSvg } from "./../assets/Logo.svg";
 
-export const Keyboard = ({onKeyPress}) => {
+export const Keyboard = ({onKeyPress, disabled}) => {
 
   const keyboardLineKeys = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
@@ -20,8 +20,12 @@ export const Keyboard = ({onKeyPress}) => {
 
   const isCommand = (key) => key === "↵" || typeof key !== "string";
 
+  // if(disabled) {
+  //   return (<></>);
+  // }
   return (
     <>
+     <div className="keyboard">
       {keyboardLineKeys.map((keyboardLine, i) => {
         return (
           <div key={i} className="keyboard-line">
@@ -39,6 +43,10 @@ export const Keyboard = ({onKeyPress}) => {
           </div>
         );
       })}
+      </div>
     </>
   );
 };
+
+
+

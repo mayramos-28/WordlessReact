@@ -38,4 +38,4 @@ export const PlayWordSlice = createSlice({
     },
 });
 
-export const {startLoadingPlayWord, setPlayWord} = PlayWordSlice.actions
+export const {startLoadingPlayWord, setPlayWord, playWord} = PlayWordSlice.actions
