@@ -1,10 +1,11 @@
 import { Keyboard } from "./Keyboard";
 import { WordAttempt } from "./WordAttempt";
 import React, { useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import { getWordPlayThunk } from "../store/slices/playWord";
 
 import {
+  firstEmptySlot,
   getCurrentAttempt as getlatestAttempt,
   getWordFromAttempt,
   modifySlot,
@@ -15,26 +16,35 @@ import { getWordCheckThunk } from "../store/slices/checkWord/checkWordThunks";
 import { Loading } from "./subComponents/Loading";
 import { Errors } from "./subComponents/Errors";
 import { Overlay } from "./subComponents/Overlay";
-import { FeedbackThunk } from "../store/slices/checkLetters/checkLettersThunk";
+import { setSlotSelected } from "../store/slices/slots/SlotSelectedSlice";
 
 export const WordGame = (props) => {
   const wordLength = 5;
   const dispatch = useDispatch();
-  const attemptsState = useSelector((state) => state.attempts);
+  const attemptsState = useSelector((state) => state.attempts, shallowEqual);
   const { slotSelected } = useSelector((state) => state.slotSelected);
   const { isLoading, error, playWord } = useSelector((state) => state.playWord);
   const firstExecution = useRef(true);
   const conditionLoading = isLoading || attemptsState.isLoading;
 
   useEffect(() => {
-    console.log("use effect word game");
     if (firstExecution.current) {
       console.log("use effect first execution word game");
       dispatch(getWordPlayThunk());
-      dispatch(newAttempt(wordLength));
+      (async() => {
+        console.log('dispatch new attempt')
+        await dispatch(newAttempt(wordLength));      
+        setTimeout(() => {
+          console.log('attempts state after dispatch new attempt', attemptsState);
+        }, 1000);
+
+        console.log('dispatch select slot')
+        await dispatch(setSlotSelected(firstEmptySlot(attemptsState)?.slotId));
+      })();
       firstExecution.current = false;
     }
-  }, [dispatch, firstExecution]);
+    console.log('jeje', attemptsState);
+  }, [dispatch, firstExecution, attemptsState]);
 
   useEffect(() => {
     console.log("use effect word game 2");
@@ -51,23 +61,18 @@ export const WordGame = (props) => {
     if (key === "enter") {
       const latestAttempt = getlatestAttempt(attemptsState);
       const wordFromCurrentAttempt = getWordFromAttempt(latestAttempt);
-      dispatch(getWordCheckThunk(wordFromCurrentAttempt));
+      dispatch(getWordCheckThunk({gameId: playWord, word: wordFromCurrentAttempt}));
 
-      if (attemptsState.isValid) {
-        const wordFromCurrentAttempt = getWordFromAttempt(latestAttempt);
-        dispatch(
-          FeedbackThunk({ gameId: playWord, word: wordFromCurrentAttempt })
-        );
-      }
       return;
     }
 
-    dispatch(
+    await dispatch(
       modifySlot({
         slotId: slotSelected,
         letter: key === "backspace" ? "" : key,
       })
     );
+   await dispatch(setSlotSelected(firstEmptySlot(attemptsState)?.slotId));
   };
 
   return (
