@@ -12,10 +12,10 @@ export const CheckWordSlice = createSlice({
   reducers: {},
 
   extraReducers: (builder) => {
-    builder.addCase(getWordCheckThunk.pending, (state, action) => {
+    builder.addCase(getWordCheckThunk.pending, (state) => {
       state.checkWordIsLoading = true;
     });
-    builder.addCase(getWordCheckThunk.fulfilled, (state, action) => {
+    builder.addCase(getWordCheckThunk.fulfilled, (state) => {
       state.checkWordIsLoading = false;
       
     });

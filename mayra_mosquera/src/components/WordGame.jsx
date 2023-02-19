@@ -1,101 +1,126 @@
-import { Keyboard } from "./Keyboard";
-import { WordAttempt } from "./WordAttempt";
 import React, { useEffect, useRef } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
-import { getWordPlayThunk } from "../store/slices/playWord";
 
 import {
+  attemptIsWinner,
   firstEmptySlot,
-  getCurrentAttempt as getlatestAttempt,
+  getLatestAttempt,
+  getSlot,
   getWordFromAttempt,
+  lastWrittedSlot,
   modifySlot,
   newAttempt,
+  slotIsEmpty,
 } from "../store/slices/attempt/AttemptsSlice";
 
 import { getWordCheckThunk } from "../store/slices/checkWord/checkWordThunks";
+import { getGameIdThunk, lostGame, winGame } from "../store/slices/gameId";
+import { setSlotIdSelected } from "../store/slices/slots/SlotSelectedSlice";
+import { Attempts } from "./Attempts";
+import { Game } from "./Game";
+import { Keyboard } from "./Keyboard";
 import { Loading } from "./subComponents/Loading";
-import { Errors } from "./subComponents/Errors";
-import { Overlay } from "./subComponents/Overlay";
-import { setSlotSelected } from "../store/slices/slots/SlotSelectedSlice";
 
-export const WordGame = (props) => {
+const finishGameMessage = (gameResult) => {
+  return (
+    (gameResult === "win" && "Has ganado") ||
+    (gameResult === "lose" && "Has perdido")
+  );
+};
+
+export const WordGame = () => {
   const wordLength = 5;
+  const maxAttempts = 6;
   const dispatch = useDispatch();
   const attemptsState = useSelector((state) => state.attempts, shallowEqual);
-  const { slotSelected } = useSelector((state) => state.slotSelected);
-  const { isLoading, error, playWord } = useSelector((state) => state.playWord);
+  const currentAttempt = useSelector((state) =>
+    getLatestAttempt(state.attempts)
+  );
+  const { slotIdSelected } = useSelector((state) => state.slotSelected);
+  const fistEmptySlot = useSelector((state) => firstEmptySlot(state.attempts));
+  const {
+    isLoading,
+    error: gameError,
+    gameId,
+    isFinished,
+    gameResult,
+  } = useSelector((state) => state.gameId);
   const firstExecution = useRef(true);
   const conditionLoading = isLoading || attemptsState.isLoading;
+  const currentAttemptIsSubmitted = currentAttempt?.submitted;
 
   useEffect(() => {
     if (firstExecution.current) {
-      console.log("use effect first execution word game");
-      dispatch(getWordPlayThunk());
-      (async() => {
-        console.log('dispatch new attempt')
-        await dispatch(newAttempt(wordLength));      
-        setTimeout(() => {
-          console.log('attempts state after dispatch new attempt', attemptsState);
-        }, 1000);
-
-        console.log('dispatch select slot')
-        await dispatch(setSlotSelected(firstEmptySlot(attemptsState)?.slotId));
-      })();
+      dispatch(getGameIdThunk());
+      dispatch(newAttempt(wordLength));
       firstExecution.current = false;
     }
-    console.log('jeje', attemptsState);
   }, [dispatch, firstExecution, attemptsState]);
 
   useEffect(() => {
-    console.log("use effect word game 2");
-    const latestAttempt = getlatestAttempt(attemptsState);
-    if (latestAttempt?.submitted) {
-      dispatch(newAttempt(wordLength));
-    }
-  }, [dispatch, attemptsState, playWord]);
+    dispatch(setSlotIdSelected(firstEmptySlot(attemptsState)?.slotId));
+  }, [dispatch, attemptsState]);
 
-  const onKeyPress = async (key) => {
-    if (conditionLoading) {
+  useEffect(() => {
+    dispatch(setSlotIdSelected(fistEmptySlot?.slotId));
+  }, [dispatch, fistEmptySlot]);
+
+  useEffect(() => {
+    if (!currentAttemptIsSubmitted || isFinished) {
       return;
     }
-    if (key === "enter") {
-      const latestAttempt = getlatestAttempt(attemptsState);
-      const wordFromCurrentAttempt = getWordFromAttempt(latestAttempt);
-      dispatch(getWordCheckThunk({gameId: playWord, word: wordFromCurrentAttempt}));
-
+    if (attemptIsWinner(currentAttempt)) {
+      dispatch(winGame());
       return;
     }
+    const numberOfAttempts = attemptsState.attempts.length;
+    if (numberOfAttempts === maxAttempts) {
+      dispatch(lostGame());
+      return;
+    }
+    dispatch(newAttempt(wordLength));
+  }, [dispatch, currentAttemptIsSubmitted, gameId]);
 
-    await dispatch(
-      modifySlot({
-        slotId: slotSelected,
-        letter: key === "backspace" ? "" : key,
-      })
+  const writteSlot = (key) =>
+    dispatch(modifySlot({ slotId: slotIdSelected, letter: key }));
+
+  const deleteSlot = () => {
+    let slot = getSlot(attemptsState, slotIdSelected);
+
+    if (slotIsEmpty(slot)) {
+      slot = lastWrittedSlot(attemptsState);
+    }
+
+    if (slot) {
+      dispatch(modifySlot({ slotId: slot.slotId, letter: "" }));
+    }
+  };
+
+  const submitAttempt = () => {
+    const latestAttempt = getLatestAttempt(attemptsState);
+    const wordFromCurrentAttempt = getWordFromAttempt(latestAttempt);
+    dispatch(
+      getWordCheckThunk({ gameId: gameId, word: wordFromCurrentAttempt })
     );
-   await dispatch(setSlotSelected(firstEmptySlot(attemptsState)?.slotId));
   };
 
   return (
-    <div className="game">
-      <div className="board">
-        <h1>Adivina la palabra</h1>
-
-        {error ? <Overlay message={error} /> : " "}
-
-        <div className="words">
-          <div className="container">
-            {conditionLoading ? <Loading /> : ""}
-
-            {attemptsState.attempts.map((attempt, index) => (
-              <WordAttempt data={attempt} key={index} />
-            ))}
-          </div>
+    <Game
+      title="Adivina la palabra"
+      overlayMessage={ gameError || finishGameMessage(gameResult)}
+      error={attemptsState.error}
+    >
+      <div className="words">
+        {conditionLoading && <Loading />}
+        <div className="container">
+          <Attempts attempts={attemptsState.attempts} />
         </div>
-
-        <Keyboard onKeyPress={onKeyPress} disabled={conditionLoading} />
       </div>
-
-      {attemptsState.error && <Errors message={attemptsState.error} />}
-    </div>
+      <Keyboard
+        onPressLetter={(key) => conditionLoading || writteSlot(key)}
+        onPressEnter={() => conditionLoading || submitAttempt()}
+        onPressBackspace={() => conditionLoading || deleteSlot()}
+      />
+    </Game>
   );
 };

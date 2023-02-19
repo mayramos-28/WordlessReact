@@ -3,13 +3,12 @@ import { createSlice } from "@reduxjs/toolkit";
 export const SlotSelectedSlice = createSlice({
   name: "slotSelected",
   initialState: {
-    slotSelected: null,
+    slotIdSelected: null,
   },
   reducers: {
-    setSlotSelected(state, action) {     
-      console.log('slot for select: ' + action.payload);
-      state.slotSelected = action.payload;
+    setSlotIdSelected(state, action) {     
+        state.slotIdSelected = action.payload;
     },
   },
 });
-export const { setSlotSelected } = SlotSelectedSlice.actions;
+export const { setSlotIdSelected } = SlotSelectedSlice.actions;

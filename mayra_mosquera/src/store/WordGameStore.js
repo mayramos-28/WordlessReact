@@ -1,16 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { AttemptsSlice } from "./slices/attempt/AttemptsSlice";
-import { checkLettersSlice } from "./slices/checkLetters/chekLettersSlice";
-import { PlayWordSlice } from "./slices/playWord";
+import { gameIdSlice } from "./slices/gameId/gameIdSlice";
 import { SlotSelectedSlice } from "./slices/slots/SlotSelectedSlice";
 
 export const store = configureStore({
   reducer: {
-    playWord: PlayWordSlice.reducer,    
+    gameId:gameIdSlice.reducer,    
     slotSelected:SlotSelectedSlice.reducer,
     attempts:AttemptsSlice.reducer,
-    checkWord:PlayWordSlice.reducer,
-    checkLetters:checkLettersSlice.reducer,  
+    checkWord:gameIdSlice.reducer,    
    
   },
 });

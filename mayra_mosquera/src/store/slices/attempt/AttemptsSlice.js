@@ -1,55 +1,113 @@
 import { createSlice } from "@reduxjs/toolkit";
-
 import { getWordCheckThunk } from "../checkWord/checkWordThunks";
+
+export const getLatestAttempt = (state) => {
+  return state.attempts[state.attempts.length - 1] || null;
+};
+export const slotIsEmpty = (slot) => !slot?.letter;
+
+export const getSlot = (state, slotId) => {
+  for (let attempt of state.attempts) {
+    for (let slot of attempt.slots) {
+      if (slot.slotId === slotId) {
+        return slot;
+      }
+    }
+  }
+  return null;
+};
+
+export const firstEmptySlot = (state) => {
+  return getLatestAttempt(state)?.slots.find(slotIsEmpty);
+};
+export const lastWrittedSlot = (state) => {
+  return [...(getLatestAttempt(state)?.slots || [])]
+    .reverse()
+    .find((slot) => slot?.letter);
+};
+
+export const getWordFromAttempt = (attempt) => {
+  return attempt.slots.map((slot) => slot.letter || " ").join("");
+};
+
+export const colorMap = (status) => {
+  if (status === "in position") {
+    return "green";
+  }
+  if (status === "in word") {
+    return "yellow";
+  }
+  if (status === "wrong") {
+    return "grey";
+  }
+  return "";
+};
+
+const prioritaryStatus = (statusArray) => {
+  return statusArray.find((status) => status == "in position")
+   || statusArray.find((status) => status == "in word")
+   || statusArray.find((status) => status == "wrong");
+};
+
+export const letterStatus = (state) => {
+  const slots = state.attempts.flatMap((attempt) => attempt.slots);
+ 
+  return slots.reduce((object, slot) => {
+    if(slotIsEmpty(slot) || !slot.status) {
+      return object;
+    }
+
+    const objectStatus = object[slot.letter] || null;
+    const slotStatus = slot.status;
+
+    return {
+      ...object, 
+      [slot.letter]: prioritaryStatus([objectStatus, slotStatus])
+    };
+
+  }, {});
+};
+
+export const attemptIsWinner = (attempt) => {
+  return attempt.slots.every((slot) => slot.status === "in position");
+}
 
 export const AttemptsSlice = createSlice({
   name: "attempt",
   initialState: {
     attempts: [],
+    slotSelected: null,
     isLoading: false,
     isValid: false,
     error: null,
     overlay: null,
-    winner: null,
   },
   reducers: {
-    newAttempt(state, action) {
-      if (state.attempts.length <= 6) {
+    newAttempt(state, action) {       
         state.isLoading = false;
         state.isValid = false;
         state.error = null;
 
-        console.log('adding attempt');
         state.attempts = [
-          ...state.attempts, 
+          ...state.attempts,
           {
-            slots: Array.from({ length: action.payload }, (i) => ({
+            slots: Array.from({ length: action.payload }, (_, i) => ({
               slotId: Math.random(),
               letter: null,
               status: null,
+              position: i,
             })),
             fullfied: false,
             submitted: false,
-        }];
-        
-        console.log('added attempt');
-
-        state.winner = state.attempts
-          .map((attempt) => attempt.status)
-          .every((attempt) => attempt === "in word");
-      }
-      if (state.winner) {
-        state.overlay = "Has ganado";
-      } else {
-        state.overlay = "Has perdido";
-      }
-      
+          },
+        ];
+        state.overlay = null;
     },
 
     modifySlot(state, action) {
       let attemptToModify = null;
-      state.attempts.forEach((attempt, i) => {
-        attempt.slots.forEach((slot, i) => {
+      state.attempts.forEach((attempt) => {
+        attempt.slots.forEach((slot) => {
           if (slot.slotId === action.payload.slotId) {
             attemptToModify = attempt;
             if (attemptToModify.submitted) {
@@ -67,7 +125,7 @@ export const AttemptsSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(getWordCheckThunk.pending, (state, action) => {
+    builder.addCase(getWordCheckThunk.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getWordCheckThunk.fulfilled, (state, action) => {
@@ -75,7 +133,7 @@ export const AttemptsSlice = createSlice({
       state.isValid = action.payload;
       state.error = null;
 
-      const lastAttempt = getCurrentAttempt(state);
+      const lastAttempt = getLatestAttempt(state);
       action.payload.feedbacks.forEach((feedback) => {
         lastAttempt.slots[feedback.position].status = feedback.status;
       });
@@ -89,25 +147,5 @@ export const AttemptsSlice = createSlice({
   },
 });
 
-export const getWordFromAttempt = (attempt) => {
-  return attempt.slots.map((slot) => slot.letter || " ").join("");
-};
-
-export const getCurrentAttempt = (state) => {
-  return state.attempts[state.attempts.length - 1] || null;
-};
-
-export const lettersAndPositions = (attempt) => {
-  const letterAndPosition = attempt.slots.map((slot, i) => {
-    return [slot.letter, i];
-  });
-  return letterAndPosition;
-};
-
-export const { newAttempt, modifySlot, attempts, selected } =
+export const { newAttempt, modifySlot, attempts, setSlotSelected } =
   AttemptsSlice.actions;
-
-export const firstEmptySlot = (state) => {
-  console.log('getting first slot');
-  return getCurrentAttempt(state)?.slots.find((slot) => !slot.letter);
-};

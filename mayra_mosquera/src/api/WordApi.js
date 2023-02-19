@@ -5,21 +5,18 @@ export const getRandomWord = async () => {
   };
 
   const response = await fetch(url, options);
-  const newWord = await response.json();
-  const wordId = newWord.id || null;
+  const result = await response.json();
+  const gameId = result.id || null;
 
-  if (!wordId) {
-    throw new Error(newWord.error || "Error initializing game: 404");
+  if (!gameId) {
+    throw new Error(result.error || "Error initializing game: 404");
   }
 
-  return newWord.id;
+  return gameId;
 };
 
 export const checkLettersWithGameId = async (letter, position, gameId) => {
   const url = `https://adivina-palabra.fly.dev/guess/${gameId}`;
-  //  const url = `https://adivina-palabra.fly.dev/guess/WHATEVER/adios`;
-
-
   const data = { position: position, letter: letter };
 
   const response = await fetch(url, {
@@ -32,42 +29,32 @@ export const checkLettersWithGameId = async (letter, position, gameId) => {
 
   const result = await response.json();
 
-  const haveStatus = result.status || null;
-
   if (result.error || null) {
     throw new Error(result.error);
   }
 
-  if (!haveStatus) {
-    throw new Error(result.error || "desconozco este error");
+  if (!result.status) {
+    throw new Error("desconozco este error");
   }
   return result.status;
 };
 
-// curl -x POST https://adivina-palabra.fly.dev/guess/$game_id \
-// 		--header 'content-type: application/json' \
-// 		--data '{
-// 			'position' :0,
-// 			'letter'	: 'a'
-// 			}'
 export const isValidWordApi = async (word) => {
-  const url = `https://adivina-palabra.fly.dev/check/${word.trim() || '-'}`;
+  const url = `https://adivina-palabra.fly.dev/check/${word.trim() || "-"}`;
   const options = {
-    method: "GET",   
+    method: "GET",
   };
   const response = await fetch(url, options);
-
   const result = await response.json();
-  const isValid =  result.valid || false; 
+  const isValid = result.valid || false;
 
-  if(result.error || null) {
-    throw new Error(result.error);
+  if (result.error) {
+    throw new Error('No hay suficientes letras');
   }
 
-  if(!isValid) {
+  if (!isValid) {
     throw new Error("La palabra no es válida");
   }
 
   return isValid;
 };
-

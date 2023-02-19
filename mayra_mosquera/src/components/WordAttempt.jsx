@@ -1,11 +1,9 @@
-
+import React from "react";
 import { Slot } from "./Slot";
 
 export const WordAttempt = ({data}) => {
 
-   // const letters= data.slots.map((slotData) => { return slotData.letter} );
-
-  return (
+   return (
     <>
       <div className="word">
         {data.slots.map((slotData, i) => (
